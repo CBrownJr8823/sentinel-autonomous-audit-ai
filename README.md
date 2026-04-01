@@ -20,3 +20,19 @@ Sentinel is a production-grade Generative AI agent designed to audit, track, and
    ```bash
    git clone [https://github.com/YOUR_USERNAME/sentinel-ai.git](https://github.com/YOUR_USERNAME/sentinel-ai.git)
    cd sentinel-ai
+   ## 🧠 Intelligence Demo: How Sentinel "Learns"
+
+Sentinel doesn't just process data; it builds a cumulative intelligence base. Here is a trace of the system evolving:
+
+**Transaction 1 (Initial State):**
+> **User:** "Audit my monthly subscription for 'Gym-Flow' at $50/month."
+> **Sentinel:** "Audit complete. Subscription is active. Note: I have no prior data on this vendor."
+
+**Transaction 2 (The Learning Phase):**
+> **User:** "I just found out 'Gym-Flow' has a veteran's discount of 20%."
+> **Sentinel:** "Acknowledged. Updating global intelligence for 'Gym-Flow' vendor profile."
+
+**Transaction 3 (The Flawless Result):**
+> **User:** "Audit my new bill from 'Gym-Flow'."
+> **Sentinel:** "⚠️ ALERT: You are being charged the full $50. Based on past learning, you are eligible for a 20% discount ($10 savings). Would you like me to draft a dispute?"
+
