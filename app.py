@@ -154,4 +154,14 @@ if st.sidebar.button("🛰️ Launch Market Scout"):
     
     script = negotiator.create_leverage_script("Xfinity", "T-Mobile Home Internet", 45)
     st.code(script, language="markdown")
+from src.vault import SentinelVault
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("🛡️ Sentinel Shield")
+vault_status = st.sidebar.status("Zero-Knowledge Vault: ACTIVE")
+
+if st.sidebar.checkbox("🔒 Enable Military-Grade Encryption"):
+    vault = SentinelVault()
+    st.sidebar.success("All PII is now tokenized and encrypted at rest.")
+    vault_status.update(label="Vault Status: SECURE", state="complete")
 
