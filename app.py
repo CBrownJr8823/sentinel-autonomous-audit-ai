@@ -164,4 +164,19 @@ if st.sidebar.checkbox("🔒 Enable Military-Grade Encryption"):
     vault = SentinelVault()
     st.sidebar.success("All PII is now tokenized and encrypted at rest.")
     vault_status.update(label="Vault Status: SECURE", state="complete")
+def enterprise_dashboard():
+    st.title("🛡️ Sentinel Commander: Enterprise Fleet")
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Active Agents", "124", "+12")
+    col2.metric("Total Alpha (Savings)", "$42,800", "+$4.2k")
+    col3.metric("Security Health", "99.9%", "SOC2 Ready")
 
+    st.markdown("### 🛰️ Real-Time Agent Activity")
+    # This simulates a 'Digital Team' of agents working in parallel
+    agents = [
+        {"Dept": "Marketing", "Task": "SaaS Audit", "Status": "Negotiating", "Finding": "-$1,200/mo"},
+        {"Dept": "Logistics", "Task": "Fuel Arbitrage", "Status": "Switching", "Finding": "-$3,500/mo"},
+        {"Dept": "IT", "Task": "Cloud Optimization", "Status": "Scanning", "Finding": "Pending"}
+    ]
+    st.table(agents)
