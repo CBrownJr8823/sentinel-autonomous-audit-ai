@@ -36,4 +36,28 @@ Sentinel doesn't just process data; it builds a cumulative intelligence base. He
 **Transaction 3 (The Flawless Result):**
 > **User:** "Audit my new bill from 'Gym-Flow'."
 > **Sentinel:** "⚠️ ALERT: You are being charged the full $50. Based on past learning, you are eligible for a 20% discount ($10 savings). Would you like me to draft a dispute?"
+## 🏗️ Technical Architecture & System Design
+
+Sentinel is built on a **Modular Multi-Agent Architecture**. Each component is isolated to ensure maximum security and scalability.
+
+### 1. The Core Orchestrator (`src/orchestrator.py`)
+The "General" of the system. It coordinates between the Auditor, Researcher, and Guard to ensure a seamless "Mission" execution.
+
+### 2. Autonomous Brain (`src/brain.py`)
+* **Engine:** GPT-4-Turbo (Reasoning)
+* **Long-Term Memory:** ChromaDB (Vector Store)
+* **Context Windowing:** Uses RAG (Retrieval-Augmented Generation) to inject past transaction data into current audits.
+
+### 3. Security & Privacy Layer (`src/guard.py` & `src/privacy.py`)
+* **Input Firewall:** Scans for prompt injection and "jailbreak" attempts.
+* **PII Masking:** Automatically redacts SSNs, Credit Cards, and Emails using Regex before data hits the LLM.
+
+### 4. Real-Time Research (`src/researcher.py`)
+An autonomous web-scraping agent that fetches live market data, ensuring Sentinel audits against *current* prices, not just training data.
+
+### 5. Automated Outreach (`src/outreach.py`)
+A secure SMTP-integrated module that handles the "Final Action" by drafting and sending formal disputes to corporate entities.
+
+### 6. Analytics & Performance (`src/analytics.py`)
+A data-science module that logs ROI and visualizes capital reclamation trends using Pandas and Streamlit.
 
