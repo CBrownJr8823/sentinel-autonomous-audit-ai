@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import os
 from src.auth import SentinelAuth
 from src.brain import SentinelBrain
 from src.guard import SentinelGuard
@@ -7,9 +8,11 @@ from src.analytics import SentinelAnalytics
 from src.dispute import DisputeEngine
 from src.vision import SentinelVision
 from src.forecaster import SentinelForecaster
+from src.voice import SentinelVoice
+from audio_recorder_streamlit import audio_recorder
 
 # --- Page Config & Styling ---
-st.set_page_config(page_title="Sentinel AI - Absolute Version", page_icon="🛡️", layout="wide")
+st.set_page_config(page_title="Sentinel AI - Absolute Agent", page_icon="🛡️", layout="wide")
 
 # --- Initialize Core Services ---
 auth = SentinelAuth()
@@ -38,12 +41,12 @@ if not st.session_state['logged_in']:
                 st.error("Invalid credentials.")
     st.stop()
 
-# --- Post-Login: Load Intelligence Assets ---
+# --- Post-Login: Load Assets ---
 @st.cache_resource
 def load_assets():
-    return SentinelBrain(), SentinelGuard(), SentinelAnalytics(), SentinelVision()
+    return SentinelBrain(), SentinelGuard(), SentinelAnalytics(), SentinelVision(), SentinelVoice()
 
-sentinel, guard, analytics, vision = load_assets()
+sentinel, guard, analytics, vision, voice_engine = load_assets()
 
 # --- Sidebar Controls ---
 st.sidebar.title(f"Welcome, {st.session_state['username']}")
@@ -53,36 +56,52 @@ if st.sidebar.button("Logout"):
     st.rerun()
 
 # --- Main UI Tabs ---
-tab1, tab2, tab3 = st.tabs(["🔍 Audit Command Center", "📊 Performance & Forecasting", "⚙️ System Logs"])
+tab1, tab2, tab3 = st.tabs(["🎙️ Audit Command Center", "📊 Performance & Forecasting", "⚙️ System Integrity"])
 
 with tab1:
-    st.title("🛡️ Secure Audit Engine")
+    st.title("🛡️ Sentinel Autonomous Agent")
     
-    col_a, col_b = st.columns(2)
+    # --- Input Methods Section ---
+    col1, col2, col3 = st.columns(3)
     doc_text = ""
-    
-    with col_a:
-        st.subheader("Upload Documents")
-        uploaded_file = st.file_uploader("Upload PDF (Contract/Bill)", type="pdf")
+
+    with col1:
+        st.subheader("📄 PDF Upload")
+        uploaded_file = st.file_uploader("Contract/Bill", type="pdf")
         if uploaded_file:
             doc_text = sentinel.process_pdf(uploaded_file)
-            st.info("📄 PDF intelligence extracted.")
+            st.info("PDF Intelligence Extracted.")
 
-    with col_b:
-        st.subheader("Vision Scan")
-        uploaded_img = st.file_uploader("📸 Scan Receipt/Image", type=["jpg", "png", "jpeg"])
+    with col2:
+        st.subheader("📸 Vision Scan")
+        uploaded_img = st.file_uploader("Receipt Image", type=["jpg", "png", "jpeg"])
         if uploaded_img:
-            with st.spinner("Sentinel Vision is reading the image..."):
+            with st.spinner("Reading Image..."):
                 img_data = vision.analyze_image(uploaded_img.getvalue())
-                st.success("Vision Data Extracted")
-                doc_text += f"\nImage Analysis: {img_data}"
+                st.success("Vision Data Loaded.")
+                doc_text += f"\nImage Data: {img_data}"
+
+    with col3:
+        st.subheader("🎙️ Voice Command")
+        audio_bytes = audio_recorder(text="Click to speak", icon_size="2x")
+        if audio_bytes:
+            with open("temp_audio.wav", "wb") as f:
+                f.write(audio_bytes)
+            with st.spinner("Transcribing..."):
+                voice_text = voice_engine.transcribe_audio("temp_audio.wav")
+                st.session_state['voice_input'] = voice_text
+                st.success(f"Heard: {voice_text}")
+                os.remove("temp_audio.wav")
 
     st.divider()
-    user_input = st.text_area("Audit Command:", placeholder="e.g., 'Compare this receipt to my last Verizon bill and find overcharges'")
+
+    # Process either typed input or voice input
+    default_input = st.session_state.get('voice_input', "")
+    user_input = st.text_area("Audit Command:", value=default_input, placeholder="Ask Sentinel to audit your data...")
+    
     use_web = st.checkbox("🔍 Enable Market Research Agent")
 
     if st.button("🚀 EXECUTE MISSION"):
-        # Firewall Check
         is_safe, msg = guard.scan_input(user_input)
         if not is_safe:
             st.error(msg)
@@ -98,35 +117,26 @@ with tab1:
         c1, c2 = st.columns(2)
         with c1:
             if st.button("📝 Generate Dispute Letter"):
-                letter = DisputeEngine.generate_letter(st.session_state['last_audit'])
-                st.code(letter, language="text")
+                st.code(DisputeEngine.generate_letter(st.session_state['last_audit']), language="text")
         with c2:
-            save_amt = st.number_input("Capital Reclaimed ($):", min_value=0.0)
+            save_amt = st.number_input("Found Savings ($):", min_value=0.0)
             if st.button("📈 Log Savings"):
-                analytics.log_savings("Manual Audit Win", save_amt)
-                st.toast(f"Saved ${save_amt}!")
+                analytics.log_savings("Agent Audit Win", save_amt)
+                st.toast("Logged to Dashboard!")
 
 with tab2:
-    st.title("📈 Performance Analytics")
+    st.title("📊 Performance & Trends")
     df = analytics.get_summary_data()
-    
     if df is not None and not df.empty:
-        total_saved = df["Amount_Saved"].sum()
-        st.metric("Total Capital Reclaimed", f"${total_saved:,.2f}")
-        
-        # Trend Analysis
-        st.subheader("Savings Forecast")
-        forecast_msg = SentinelForecaster.predict_trend(df)
-        st.info(forecast_msg)
-        
+        st.metric("Total Reclaimed", f"${df['Amount_Saved'].sum():,.2f}")
+        st.info(SentinelForecaster.predict_trend(df))
         st.bar_chart(data=df, x="Date", y="Amount_Saved")
-        st.dataframe(df, use_container_width=True)
     else:
-        st.info("No data available. Run an audit to begin tracking performance.")
+        st.info("No audit history found.")
 
 with tab3:
-    st.title("⚙️ System Integrity")
-    st.write("Sentinel AI v1.5 | Enterprise Vision Enabled")
-    if st.button("Clear Cache"):
+    st.title("⚙️ Integrity Settings")
+    st.write("System: Sentinel v1.8 (Agentic)")
+    if st.button("Refresh Cache"):
         st.cache_resource.clear()
-        st.success("System memory refreshed.")
+        st.rerun()
