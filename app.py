@@ -1,47 +1,39 @@
 import streamlit as st
 from src.brain import SentinelBrain
-import os
 
-# Page Config: This makes it look like a real tech startup site
 st.set_page_config(page_title="Sentinel AI Dashboard", page_icon="🛡️", layout="wide")
 
-# Initialize the Brain (using Streamlit's cache so it doesn't reload every time)
 @st.cache_resource
 def load_brain():
     return SentinelBrain()
 
 sentinel = load_brain()
 
-# --- Sidebar UI ---
-st.sidebar.title("🛡️ Sentinel Control")
-st.sidebar.info("Status: Online & Learning")
-if st.sidebar.button("Clear System Memory"):
-    st.sidebar.warning("This would reset the learning database.")
-
-# --- Main UI ---
 st.title("Sentinel: Autonomous Audit Engine")
-st.markdown("### *Continuous Intelligence. Flawless Auditing.*")
+st.markdown("### *Upload documents or enter text for a flawless audit.*")
 
-# Input Area
-user_input = st.text_area("Enter transaction details, contract text, or financial data:", 
-                          placeholder="e.g., 'Analyze my Verizon bill for hidden fees...'")
+# --- NEW: File Upload Section ---
+uploaded_file = st.file_uploader("Upload PDF Contract or Receipt", type="pdf")
+doc_text = ""
+
+if uploaded_file is not None:
+    doc_text = sentinel.process_pdf(uploaded_file)
+    st.info("📄 Document loaded and added to Sentinel's memory.")
+
+# --- Input Area ---
+user_input = st.text_area("What should Sentinel look for in this data?", 
+                          placeholder="e.g., 'Audit this contract for hidden cancellation fees' or 'Compare this receipt to my past gym bills'")
 
 if st.button("Run Sentinel Audit"):
     if user_input:
-        with st.spinner("Sentinel is analyzing and learning..."):
-            # 1. Get the AI result
-            result = sentinel.analyze(user_input)
-            
-            # 2. Learn from it
-            sentinel.learn_from_transaction(f"User Input: {user_input} | Audit Result: {result}")
-            
-            # 3. Show the result in a nice box
+        with st.spinner("Sentinel is cross-referencing memory and documents..."):
+            result = sentinel.analyze(user_input, context_data=doc_text)
             st.success("Audit Complete")
             st.markdown("#### Sentinel's Analysis:")
             st.write(result)
     else:
-        st.error("Please enter data for Sentinel to analyze.")
+        st.error("Please enter a question for Sentinel.")
 
-# Footer
 st.divider()
-st.caption("Sentinel AI v1.0 | Built for Enterprise-Grade Financial Intelligence")
+st.caption("Sentinel AI v1.1 | PDF Auditing Enabled")
+
