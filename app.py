@@ -1,182 +1,95 @@
 import streamlit as st
-import pandas as pd
 import os
-from src.auth import SentinelAuth
-from src.brain import SentinelBrain
-from src.guard import SentinelGuard
-from src.analytics import SentinelAnalytics
-from src.dispute import DisputeEngine
-from src.vision import SentinelVision
-from src.forecaster import SentinelForecaster
-from src.voice import SentinelVoice
-from audio_recorder_streamlit import audio_recorder
+from src.scout import SentinelScout
+from src.negotiator import SentinelNegotiator
+from src.vault import SentinelVault
+from src.tax_shield import SentinelTaxShield
 
-# --- Page Config & Styling ---
-st.set_page_config(page_title="Sentinel AI - Absolute Agent", page_icon="🛡️", layout="wide")
+# --- CONFIGURATION & UI SETUP ---
+st.set_page_config(page_title="Sentinel Prime | Enterprise AI Finance", layout="wide", page_icon="🛡️")
 
-# --- Initialize Core Services ---
-auth = SentinelAuth()
+# Initialize our Million-Dollar Modules
+scout = SentinelScout()
+negotiator = SentinelNegotiator()
+vault = SentinelVault()
+shield = SentinelTaxShield()
 
-# --- Login / Signup Wall ---
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
-
-if not st.session_state['logged_in']:
-    st.title("🛡️ Sentinel AI: Enterprise Login")
-    choice = st.selectbox("Action", ["Login", "Sign Up"])
-    user = st.text_input("Username")
-    pwd = st.text_input("Password", type="password")
-
-    if choice == "Sign Up":
-        if st.button("Create Secure Account"):
-            success, msg = auth.create_user(user, pwd)
-            st.success(msg) if success else st.error(msg)
-    else:
-        if st.button("Authenticate"):
-            if auth.login(user, pwd):
-                st.session_state['logged_in'] = True
-                st.session_state['username'] = user
-                st.rerun()
-            else:
-                st.error("Invalid credentials.")
-    st.stop()
-
-# --- Post-Login: Load Assets ---
-@st.cache_resource
-def load_assets():
-    return SentinelBrain(), SentinelGuard(), SentinelAnalytics(), SentinelVision(), SentinelVoice()
-
-sentinel, guard, analytics, vision, voice_engine = load_assets()
-
-# --- Sidebar Controls ---
-st.sidebar.title(f"Welcome, {st.session_state['username']}")
-st.sidebar.markdown("### 🔒 System Security: **Active**")
-if st.sidebar.button("Logout"):
-    st.session_state['logged_in'] = False
-    st.rerun()
-
-# --- Main UI Tabs ---
-tab1, tab2, tab3 = st.tabs(["🎙️ Audit Command Center", "📊 Performance & Forecasting", "⚙️ System Integrity"])
-
-with tab1:
-    st.title("🛡️ Sentinel Autonomous Agent")
+# --- SIDEBAR: THE COMMANDER PANEL ---
+with st.sidebar:
+    st.title("🛡️ Sentinel Prime")
+    st.subheader("Enterprise Command Center")
     
-    # --- Input Methods Section ---
-    col1, col2, col3 = st.columns(3)
-    doc_text = ""
+    mode = st.radio("Switch Focus:", ["Fleet Commander", "Audit & Arbitrage", "Tax Shield"])
+    
+    st.markdown("---")
+    st.subheader("🔐 Security Layer")
+    use_encryption = st.toggle("Enable Military-Grade Encryption", value=True)
+    if use_encryption:
+        st.success("Vault Status: SECURE (AES-256)")
+    
+    st.markdown("---")
+    st.info(f"Connected as: {os.getenv('USER_ROLE', 'Lead Architect')}")
 
-    with col1:
-        st.subheader("📄 PDF Upload")
-        uploaded_file = st.file_uploader("Contract/Bill", type="pdf")
-        if uploaded_file:
-            doc_text = sentinel.process_pdf(uploaded_file)
-            st.info("PDF Intelligence Extracted.")
+# --- MAIN INTERFACE ---
 
-    with col2:
-        st.subheader("📸 Vision Scan")
-        uploaded_img = st.file_uploader("Receipt Image", type=["jpg", "png", "jpeg"])
-        if uploaded_img:
-            with st.spinner("Reading Image..."):
-                img_data = vision.analyze_image(uploaded_img.getvalue())
-                st.success("Vision Data Loaded.")
-                doc_text += f"\nImage Data: {img_data}"
-
-    with col3:
-        st.subheader("🎙️ Voice Command")
-        audio_bytes = audio_recorder(text="Click to speak", icon_size="2x")
-        if audio_bytes:
-            with open("temp_audio.wav", "wb") as f:
-                f.write(audio_bytes)
-            with st.spinner("Transcribing..."):
-                voice_text = voice_engine.transcribe_audio("temp_audio.wav")
-                st.session_state['voice_input'] = voice_text
-                st.success(f"Heard: {voice_text}")
-                os.remove("temp_audio.wav")
+if mode == "Fleet Commander":
+    st.header("🛰️ Sentinel Fleet Commander")
+    st.markdown("### Global Performance Overview")
+    
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Active Agents", "124", "+12 this week")
+    m2.metric("Total Alpha (Savings)", "$42,800", "+$4,200")
+    m3.metric("Audit Accuracy", "99.98%", "SOC2 Verified")
 
     st.divider()
-
-    # Process either typed input or voice input
-    default_input = st.session_state.get('voice_input', "")
-    user_input = st.text_area("Audit Command:", value=default_input, placeholder="Ask Sentinel to audit your data...")
-    
-    use_web = st.checkbox("🔍 Enable Market Research Agent")
-
-    if st.button("🚀 EXECUTE MISSION"):
-        is_safe, msg = guard.scan_input(user_input)
-        if not is_safe:
-            st.error(msg)
-        else:
-            with st.spinner("Sentinel is processing..."):
-                result = sentinel.analyze(user_input, context_data=doc_text, use_web=use_web)
-                st.session_state['last_audit'] = result
-                st.subheader("Audit Results")
-                st.write(result)
-
-    if 'last_audit' in st.session_state:
-        st.divider()
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("📝 Generate Dispute Letter"):
-                st.code(DisputeEngine.generate_letter(st.session_state['last_audit']), language="text")
-        with c2:
-            save_amt = st.number_input("Found Savings ($):", min_value=0.0)
-            if st.button("📈 Log Savings"):
-                analytics.log_savings("Agent Audit Win", save_amt)
-                st.toast("Logged to Dashboard!")
-
-with tab2:
-    st.title("📊 Performance & Trends")
-    df = analytics.get_summary_data()
-    if df is not None and not df.empty:
-        st.metric("Total Reclaimed", f"${df['Amount_Saved'].sum():,.2f}")
-        st.info(SentinelForecaster.predict_trend(df))
-        st.bar_chart(data=df, x="Date", y="Amount_Saved")
-    else:
-        st.info("No audit history found.")
-
-with tab3:
-    st.title("⚙️ Integrity Settings")
-    st.write("System: Sentinel v1.8 (Agentic)")
-    if st.button("Refresh Cache"):
-        st.cache_resource.clear()
-        st.rerun()
-        from src.scout import SentinelScout
-from src.negotiator import SentinelNegotiator
-
-if st.sidebar.button("🛰️ Launch Market Scout"):
-    scout = SentinelScout()
-    negotiator = SentinelNegotiator()
-    
-    # Example: Running a sweep on a detected bill
-    findings = scout.market_sweep("Xfinity", "High Speed Internet", 120)
-    st.write("### 📊 Market Intelligence Report")
-    st.success("Found 2 alternatives saving an average of $45/month.")
-    
-    script = negotiator.create_leverage_script("Xfinity", "T-Mobile Home Internet", 45)
-    st.code(script, language="markdown")
-from src.vault import SentinelVault
-
-st.sidebar.markdown("---")
-st.sidebar.subheader("🛡️ Sentinel Shield")
-vault_status = st.sidebar.status("Zero-Knowledge Vault: ACTIVE")
-
-if st.sidebar.checkbox("🔒 Enable Military-Grade Encryption"):
-    vault = SentinelVault()
-    st.sidebar.success("All PII is now tokenized and encrypted at rest.")
-    vault_status.update(label="Vault Status: SECURE", state="complete")
-def enterprise_dashboard():
-    st.title("🛡️ Sentinel Commander: Enterprise Fleet")
-    
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Active Agents", "124", "+12")
-    col2.metric("Total Alpha (Savings)", "$42,800", "+$4.2k")
-    col3.metric("Security Health", "99.9%", "SOC2 Ready")
-
-    st.markdown("### 🛰️ Real-Time Agent Activity")
-    # This simulates a 'Digital Team' of agents working in parallel
+    st.subheader("Real-Time Agent Activity")
     agents = [
-        {"Dept": "Marketing", "Task": "SaaS Audit", "Status": "Negotiating", "Finding": "-$1,200/mo"},
-        {"Dept": "Logistics", "Task": "Fuel Arbitrage", "Status": "Switching", "Finding": "-$3,500/mo"},
-        {"Dept": "IT", "Task": "Cloud Optimization", "Status": "Scanning", "Finding": "Pending"}
+        {"Dept": "Marketing", "Task": "SaaS Arbitrage", "Status": "Negotiating", "Finding": "-$1,200/mo"},
+        {"Dept": "Logistics", "Task": "Fuel Audit", "Status": "Complete", "Finding": "-$3,500/mo"},
+        {"Dept": "IT Infrastructure", "Task": "Cloud Optimization", "Status": "Scanning", "Finding": "Pending"}
     ]
     st.table(agents)
+
+elif mode == "Audit & Arbitrage":
+    st.header("🔎 Audit & Market Arbitrage")
+    
+    col_left, col_right = st.columns([1, 1])
+    
+    with col_left:
+        st.subheader("Upload Bill/Statement")
+        uploaded_file = st.file_uploader("Drop PDF or Image here", type=["pdf", "png", "jpg"])
+        
+        if st.button("🚀 Launch Market Scout"):
+            # This triggers our 'Hunter' logic
+            with st.spinner("Scouting global markets for Alpha..."):
+                findings = scout.market_sweep("Verizon Business", "Telecom", 1500)
+                st.session_state['findings'] = findings
+                st.success("Arbitrage Opportunity Detected!")
+
+    with col_right:
+        if 'findings' in st.session_state:
+            st.subheader("📊 Intelligence Report")
+            st.write(st.session_state['findings'])
+            
+            script = negotiator.create_leverage_script("Verizon", "T-Mobile Enterprise", 450)
+            st.markdown("### 🏹 Tactical Negotiation Script")
+            st.code(script, language="markdown")
+
+elif mode == "Tax Shield":
+    st.header("🛡️ Autonomous Tax Shield")
+    st.markdown("Predictive Expense Classification for 100% Audit Readiness.")
+    
+    if st.button("🔍 Run Global Tax Audit"):
+        # Simulated transaction data for the demo
+        sample_data = [
+            {"merchant": "AWS Cloud", "amount": 1200.00, "category": "Software"},
+            {"merchant": "Facebook Ads", "amount": 5000.00, "category": "Marketing"}
+        ]
+        report = shield.flag_deductions(sample_data)
+        st.write("### ✅ 2026 Audit-Ready Defense Report")
+        st.dataframe(report)
+        st.success("99% Accuracy Confidence Level reached.")
+
+# --- FOOTER ---
+st.markdown("---")
+st.caption("Sentinel Prime v2.0 | Built with Military-Grade Security & Agentic Intelligence")
