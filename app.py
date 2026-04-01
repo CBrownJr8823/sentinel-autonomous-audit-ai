@@ -1,46 +1,42 @@
 import streamlit as st
-from src.auth import SentinelAuth
 from src.brain import SentinelBrain
+from src.outreach import SentinelOutreach
+from src.orchestrator import SentinelOrchestrator
 from src.guard import SentinelGuard
-from src.analytics import SentinelAnalytics
-from src.dispute import DisputeEngine
+from src.researcher import SentinelResearcher
 
-st.set_page_config(page_title="Sentinel AI - Enterprise SaaS", page_icon="🛡️", layout="wide")
+st.set_page_config(page_title="Sentinel AI - Absolute Version", layout="wide")
 
-auth = SentinelAuth()
+# Initialize the "Team"
+@st.cache_resource
+def init_system():
+    b = SentinelBrain()
+    r = SentinelResearcher()
+    g = SentinelGuard()
+    return b, r, g, SentinelOrchestrator(b, r, g), SentinelOutreach()
 
-# --- LOGIN LOGIC ---
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
+brain, res, guard, manager, mailer = init_system()
 
-if not st.session_state['logged_in']:
-    st.title("🛡️ Sentinel AI Login")
-    choice = st.selectbox("Login or Signup", ["Login", "Sign Up"])
-    user = st.text_input("Username")
-    pwd = st.text_input("Password", type="password")
+st.title("🛡️ Sentinel: Autonomous Financial Agent")
 
-    if choice == "Sign Up":
-        if st.button("Create Account"):
-            success, msg = auth.create_user(user, pwd)
-            st.success(msg) if success else st.error(msg)
-    else:
-        if st.button("Login"):
-            if auth.login(user, pwd):
-                st.session_state['logged_in'] = True
-                st.session_state['username'] = user
-                st.rerun()
-            else:
-                st.error("Invalid credentials.")
-    st.stop() # Stops the app from loading until login is successful
+# --- UI Layout ---
+with st.sidebar:
+    st.header("Settings")
+    target_email = st.text_input("Company Support Email", "billing@company.com")
+    if st.button("Run Scheduled Audit"):
+        st.toast("Auto-Audit Scheduled for 2:00 AM")
 
-# --- PROTECTED APP CONTENT ---
-st.sidebar.title(f"Welcome, {st.session_state['username']}")
-if st.sidebar.button("Logout"):
-    st.session_state['logged_in'] = False
-    st.rerun()
+# Main Action Area
+cmd = st.text_input("What is the mission today?", placeholder="Audit my bill and email a dispute if wrong.")
 
-# Load the rest of the assets only after login
-sentinel, guard, analytics = SentinelBrain(), SentinelGuard(), SentinelAnalytics()
-
-tab1, tab2 = st.tabs(["🔍 Audit Center", "📊 Performance"])
-# ... (The rest of your tab1 and tab2 code from the previous step goes here)
+if st.button("🚀 EXECUTE MISSION"):
+    # The Orchestrator takes over!
+    report = manager.execute_full_mission(cmd)
+    st.subheader("Mission Report")
+    st.write(report)
+    
+    # Auto-Outreach Option
+    if "Error" in report or "Overcharge" in report:
+        if st.button("📧 Send Autonomous Dispute"):
+            status = mailer.send_dispute(target_email, "Audit Dispute", report)
+            st.success(status)
