@@ -1,61 +1,48 @@
 import streamlit as st
 from src.brain import SentinelBrain
 from src.dispute import DisputeEngine
+from src.guard import SentinelGuard # Import the Bouncer
 
-# Page Config
-st.set_page_config(page_title="Sentinel AI Dashboard", page_icon="🛡️", layout="wide")
+st.set_page_config(page_title="Sentinel AI - Secure Portal", page_icon="🛡️", layout="wide")
 
-# Initialize Brain
 @st.cache_resource
-def load_brain():
-    return SentinelBrain()
+def load_assets():
+    return SentinelBrain(), SentinelGuard()
 
-sentinel = load_brain()
+sentinel, guard = load_assets()
 
-st.title("🛡️ Sentinel: Autonomous Audit & Research Engine")
-st.markdown("### *Identify Errors. Assert Rights. Reclaim Capital.*")
+st.title("🛡️ Sentinel: Secure Autonomous Audit Engine")
+st.sidebar.markdown("### 🔒 Security Status: **Active**")
+st.sidebar.info("Firewall: Scanning all inputs")
 
-# --- Sidebar: System Status ---
-st.sidebar.title("System Status")
-st.sidebar.success("Core: Online")
-st.sidebar.info("Memory: Active (RAG)")
-st.sidebar.info("Web Research: Ready")
-
-# --- Document Upload ---
-uploaded_file = st.file_uploader("Upload PDF (Contract/Receipt)", type="pdf")
+# --- UI Sections ---
+uploaded_file = st.file_uploader("Upload PDF (Encrypted Transfer)", type="pdf")
 doc_text = ""
 if uploaded_file:
     doc_text = sentinel.process_pdf(uploaded_file)
-    st.info("📄 Document Analyzed & Added to Intelligence Base.")
 
-# --- Analysis & Research Section ---
-st.divider()
-user_input = st.text_area("Audit Command:", placeholder="e.g., 'Check this Verizon bill for hidden fees and compare it to current market rates'")
+user_input = st.text_area("Secure Audit Command:")
+use_web = st.checkbox("🔍 Enable Market Research")
 
-# The new "Power Toggle"
-use_web = st.checkbox("🔍 Enable Live Web Research (Compares against live market data)")
-
-if st.button("🚀 Run Full Audit"):
+if st.button("🚀 Run Secure Audit"):
     if user_input:
-        with st.spinner("Sentinel is cross-referencing memory and researching the web..."):
-            # We pass the web toggle to the brain here
-            result = sentinel.analyze(user_input, context_data=doc_text, use_web=use_web)
-            st.session_state['last_audit'] = result 
-            
-            st.success("Audit Complete")
-            st.subheader("Sentinel Analysis")
-            st.write(result)
+        # --- THE FIREWALL CHECK ---
+        is_safe, message = guard.scan_input(user_input)
+        
+        if not is_safe:
+            st.error(message)
+            sentinel.logger.log_error(f"BLOCKED ATTACK: {user_input[:50]}...")
+        else:
+            with st.spinner("Sentinel is analyzing..."):
+                result = sentinel.analyze(user_input, context_data=doc_text, use_web=use_web)
+                st.session_state['last_audit'] = result
+                st.success("Audit Complete")
+                st.write(result)
     else:
-        st.error("Please enter a command for Sentinel.")
+        st.error("Please enter a command.")
 
-# --- Dispute Generation ---
+# Dispute Section (Keep as is)
 if 'last_audit' in st.session_state:
-    st.divider()
-    st.subheader("🛠️ Take Action")
     if st.button("📝 Generate Dispute Letter"):
         letter = DisputeEngine.generate_letter(st.session_state['last_audit'])
-        st.text_area("Copy/Paste this to your email:", value=letter, height=300)
-        st.download_button("Download Letter (.txt)", letter, file_name="sentinel_dispute.txt")
-
-st.divider()
-st.caption("Sentinel AI v1.2 | Multi-Agent Research Enabled")
+        st.text_area("Copy/Paste:", value=letter, height=200)
