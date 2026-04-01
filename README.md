@@ -7,6 +7,7 @@ Sentinel is a production-grade Generative AI agent designed to audit, track, and
 * **Vector Memory (RAG):** Uses ChromaDB to maintain a permanent "brain" of historical data.
 * **Autonomous Reasoning:** Powered by GPT-4-Turbo for complex financial and legal analysis.
 * **Privacy-First:** Designed with environment-variable security to protect sensitive keys.
+🖥️ Interactive Web Dashboard: Built with Streamlit for real-time monitoring and human-in-the-loop auditing.
 
 ## 🛠 Tech Stack
 * **Language:** Python 3.10+
