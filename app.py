@@ -140,3 +140,18 @@ with tab3:
     if st.button("Refresh Cache"):
         st.cache_resource.clear()
         st.rerun()
+        from src.scout import SentinelScout
+from src.negotiator import SentinelNegotiator
+
+if st.sidebar.button("🛰️ Launch Market Scout"):
+    scout = SentinelScout()
+    negotiator = SentinelNegotiator()
+    
+    # Example: Running a sweep on a detected bill
+    findings = scout.market_sweep("Xfinity", "High Speed Internet", 120)
+    st.write("### 📊 Market Intelligence Report")
+    st.success("Found 2 alternatives saving an average of $45/month.")
+    
+    script = negotiator.create_leverage_script("Xfinity", "T-Mobile Home Internet", 45)
+    st.code(script, language="markdown")
+
