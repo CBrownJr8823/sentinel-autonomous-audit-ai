@@ -1,65 +1,46 @@
 import streamlit as st
-import pandas as pd
+from src.auth import SentinelAuth
 from src.brain import SentinelBrain
-from src.dispute import DisputeEngine
 from src.guard import SentinelGuard
 from src.analytics import SentinelAnalytics
+from src.dispute import DisputeEngine
 
-st.set_page_config(page_title="Sentinel AI - Enterprise", page_icon="🛡️", layout="wide")
+st.set_page_config(page_title="Sentinel AI - Enterprise SaaS", page_icon="🛡️", layout="wide")
 
-@st.cache_resource
-def load_assets():
-    return SentinelBrain(), SentinelGuard(), SentinelAnalytics()
+auth = SentinelAuth()
 
-sentinel, guard, analytics = load_assets()
+# --- LOGIN LOGIC ---
+if 'logged_in' not in st.session_state:
+    st.session_state['logged_in'] = False
 
-# --- THE UI TABS ---
-tab1, tab2 = st.tabs(["🔍 Audit Command Center", "📊 Performance & Savings"])
+if not st.session_state['logged_in']:
+    st.title("🛡️ Sentinel AI Login")
+    choice = st.selectbox("Login or Signup", ["Login", "Sign Up"])
+    user = st.text_input("Username")
+    pwd = st.text_input("Password", type="password")
 
-with tab1:
-    st.title("🛡️ Sentinel Secure Audit")
-    uploaded_file = st.file_uploader("Upload PDF", type="pdf")
-    doc_text = sentinel.process_pdf(uploaded_file) if uploaded_file else ""
-    
-    user_input = st.text_area("Audit Command:")
-    use_web = st.checkbox("🔍 Enable Market Research")
-
-    if st.button("🚀 Run Audit"):
-        is_safe, msg = guard.scan_input(user_input)
-        if not is_safe:
-            st.error(msg)
-        else:
-            with st.spinner("Analyzing..."):
-                result = sentinel.analyze(user_input, doc_text, use_web)
-                st.session_state['last_audit'] = result
-                st.success("Complete")
-                st.write(result)
-
-    if 'last_audit' in st.session_state:
-        st.divider()
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("📝 Generate Dispute"):
-                st.code(DisputeEngine.generate_letter(st.session_state['last_audit']))
-        with col2:
-            # NEW: Log savings directly from the UI
-            save_amt = st.number_input("Found savings? Enter amount ($):", min_value=0.0)
-            if st.button("📈 Log Savings to Dashboard"):
-                analytics.log_savings("Manual Entry", save_amt)
-                st.toast(f"Logged ${save_amt} to performance!")
-
-with tab2:
-    st.title("📈 Savings Performance")
-    df = analytics.get_summary_data()
-    if df is not None and not df.empty:
-        total = df["Amount_Saved"].sum()
-        st.metric("Total Capital Reclaimed", f"${total:,.2f}")
-        
-        # Display a Bar Chart of savings over time
-        st.subheader("Savings History")
-        st.bar_chart(data=df, x="Date", y="Amount_Saved")
-        
-        st.subheader("Audit Log")
-        st.dataframe(df, use_container_width=True)
+    if choice == "Sign Up":
+        if st.button("Create Account"):
+            success, msg = auth.create_user(user, pwd)
+            st.success(msg) if success else st.error(msg)
     else:
-        st.info("No savings logged yet. Run an audit to begin.")
+        if st.button("Login"):
+            if auth.login(user, pwd):
+                st.session_state['logged_in'] = True
+                st.session_state['username'] = user
+                st.rerun()
+            else:
+                st.error("Invalid credentials.")
+    st.stop() # Stops the app from loading until login is successful
+
+# --- PROTECTED APP CONTENT ---
+st.sidebar.title(f"Welcome, {st.session_state['username']}")
+if st.sidebar.button("Logout"):
+    st.session_state['logged_in'] = False
+    st.rerun()
+
+# Load the rest of the assets only after login
+sentinel, guard, analytics = SentinelBrain(), SentinelGuard(), SentinelAnalytics()
+
+tab1, tab2 = st.tabs(["🔍 Audit Center", "📊 Performance"])
+# ... (The rest of your tab1 and tab2 code from the previous step goes here)
